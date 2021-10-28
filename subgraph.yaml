@@ -1,0 +1,44 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: deth
+    network: mainnet
+    source:
+      address: "0x51863Ec92BA14ede7B17fb2B053145C90E215A57"
+      abi: deth
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.2
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - Issued
+        - LogNote
+        - LogSetAuthority
+        - LogSetOwner
+        - Redeemed
+        - SettingsChanged
+        - Transfer
+      abis:
+        - name: deth
+          file: ./abis/deth.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: Issued(address,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleIssued
+        - event: LogNote(indexed bytes4,indexed address,indexed bytes32,indexed bytes32,uint256,bytes)
+          handler: handleLogNote
+        - event: LogSetAuthority(indexed address)
+          handler: handleLogSetAuthority
+        - event: LogSetOwner(indexed address)
+          handler: handleLogSetOwner
+        - event: Redeemed(address,address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleRedeemed
+        - event: SettingsChanged(uint256,uint256,uint256)
+          handler: handleSettingsChanged
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/mapping.ts

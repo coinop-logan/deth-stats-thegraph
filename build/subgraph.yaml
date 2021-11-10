@@ -1,4 +1,4 @@
-description: test
+description: Tracks ETH redeemable in the dETH token
 specVersion: 0.0.2
 schema:
   file: schema.graphql

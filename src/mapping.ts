@@ -1,98 +1,102 @@
-import { BigInt } from "@graphprotocol/graph-ts"
 import {
-  deth,
-  Approval,
-  Issued,
-  LogNote,
-  LogSetAuthority,
-  LogSetOwner,
-  Redeemed,
-  SettingsChanged,
-  Transfer
+    Address,
+    BigInt,
+    ethereum,
+    Entity,
+    Value,
+    store,
+    ValueKind,
+    BigDecimal
+} from "@graphprotocol/graph-ts"
+import {
+    deth,
+    Approval,
+    Issued,
+    LogNote,
+    LogSetAuthority,
+    LogSetOwner,
+    Redeemed,
+    SettingsChanged,
+    Transfer
 } from "../generated/deth/deth"
-import { ExampleEntity } from "../generated/schema"
 
-export function handleApproval(event: Approval): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+class DataPoint extends Entity {
+    constructor(id: string) {
+        super();
+        this.set("id", Value.fromString(id));
+    }
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
+    save(): void {
+        let id = this.get("id");
+        assert(id !== null, "Cannot save DataPoint entity without an ID");
+        assert(
+            id.kind == ValueKind.STRING,
+            "Cannot save DataPoint entity with non-string ID. " +
+            'Considering using .toHex() to convert the "id" to a string.'
+        );
+        store.set("DataPoint", id.toString(), this);
+    }
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
+    static load(id: string): DataPoint | null {
+        return store.get("DataPoint", id) as DataPoint | null;
+    }
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
+    get id(): string {
+        let value = this.get("id");
+        return value.toString();
+    }
 
-  // Entity fields can be set based on event parameters
-  entity.owner = event.params.owner
-  entity.spender = event.params.spender
+    set id(value: string) {
+        this.set("id", Value.fromString(value));
+    }
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
+    get ethRedeemablePerDeth(): BigInt {
+        let value = this.get("ethRedeemablePerDeth");
+        return value.toBigInt();
+    }
 
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
+    set ethRedeemablePerDeth(value: BigInt) {
+        this.set("ethRedeemablePerDeth", Value.fromBigInt(value));
+    }
 
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.allowance(...)
-  // - contract.approve(...)
-  // - contract.authority(...)
-  // - contract.automationFeePerc(...)
-  // - contract.balanceOf(...)
-  // - contract.cache(...)
-  // - contract.calculateIssuanceAmount(...)
-  // - contract.calculateRedemptionValue(...)
-  // - contract.cdpId(...)
-  // - contract.decimals(...)
-  // - contract.decreaseAllowance(...)
-  // - contract.ethGemJoin(...)
-  // - contract.getCollateral(...)
-  // - contract.getCollateralPriceRAY(...)
-  // - contract.getExcessCollateral(...)
-  // - contract.getRatio(...)
-  // - contract.gulper(...)
-  // - contract.increaseAllowance(...)
-  // - contract.makerManager(...)
-  // - contract.minRedemptionRatio(...)
-  // - contract.name(...)
-  // - contract.oracle(...)
-  // - contract.owner(...)
-  // - contract.riskLimit(...)
-  // - contract.saverProxy(...)
-  // - contract.saverProxyActions(...)
-  // - contract.symbol(...)
-  // - contract.totalSupply(...)
-  // - contract.transfer(...)
-  // - contract.transferFrom(...)
+    get dethRedeemablePerEth(): BigInt {
+        let value = this.get("dethRedeemablePerEth");
+        return value.toBigInt();
+    }
+
+    set dethRedeemablePerEth(value: BigInt) {
+        this.set("dethRedeemablePerEth", Value.fromBigInt(value));
+    }
+
+    get timestamp(): BigInt {
+        let value = this.get("timestamp");
+        return value.toBigInt();
+    }
+
+    set timestamp(value: BigInt) {
+        this.set("timestamp", Value.fromBigInt(value));
+    }
 }
 
-export function handleIssued(event: Issued): void {}
 
-export function handleLogNote(event: LogNote): void {}
-
-export function handleLogSetAuthority(event: LogSetAuthority): void {}
-
-export function handleLogSetOwner(event: LogSetOwner): void {}
-
-export function handleRedeemed(event: Redeemed): void {}
-
-export function handleSettingsChanged(event: SettingsChanged): void {}
-
-export function handleTransfer(event: Transfer): void {}
+export function handleBlock(block: ethereum.Block): void {
+    let blocknum = block.number
+    if (blocknum.mod(BigInt.fromI32(1000)).isZero()) {
+        let dethContract = deth.bind(Address.fromString("0x51863Ec92BA14ede7B17fb2B053145C90E215A57"))
+        
+        let ethRedeemablePerDeth = dethContract.calculateRedemptionValue(BigInt.fromString("1000000000000000000")).value3
+        let dethRedeemablePerEth = dethContract.calculateIssuanceAmount(BigInt.fromString("1000000000000000000")).value4
+        
+        let id = blocknum.toString()
+        
+        if (DataPoint.load(id) == null) {
+            let dataPoint = new DataPoint(id)
+            
+            dataPoint.timestamp = block.timestamp
+            dataPoint.ethRedeemablePerDeth = ethRedeemablePerDeth
+            dataPoint.dethRedeemablePerEth = dethRedeemablePerEth
+            
+            dataPoint.save()
+        }
+    }
+}

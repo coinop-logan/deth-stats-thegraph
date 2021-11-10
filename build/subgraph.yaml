@@ -1,7 +1,7 @@
 description: test
 specVersion: 0.0.2
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: deth
@@ -25,7 +25,7 @@ dataSources:
         - Transfer
       abis:
         - name: deth
-          file: ./abis/deth.json
+          file: deth/abis/deth.json
       blockHandlers:
         - handler: handleBlock
-      file: ./src/mapping.ts
+      file: deth/deth.wasm

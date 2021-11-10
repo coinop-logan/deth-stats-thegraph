@@ -12,7 +12,7 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
-export class ExampleEntity extends Entity {
+export class DataPoint extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
@@ -20,17 +20,17 @@ export class ExampleEntity extends Entity {
 
   save(): void {
     let id = this.get("id");
-    assert(id !== null, "Cannot save ExampleEntity entity without an ID");
+    assert(id !== null, "Cannot save DataPoint entity without an ID");
     assert(
       id.kind == ValueKind.STRING,
-      "Cannot save ExampleEntity entity with non-string ID. " +
+      "Cannot save DataPoint entity with non-string ID. " +
         'Considering using .toHex() to convert the "id" to a string.'
     );
-    store.set("ExampleEntity", id.toString(), this);
+    store.set("DataPoint", id.toString(), this);
   }
 
-  static load(id: string): ExampleEntity | null {
-    return store.get("ExampleEntity", id) as ExampleEntity | null;
+  static load(id: string): DataPoint | null {
+    return store.get("DataPoint", id) as DataPoint | null;
   }
 
   get id(): string {
@@ -42,30 +42,30 @@ export class ExampleEntity extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get count(): BigInt {
-    let value = this.get("count");
+  get ethRedeemablePerDeth(): BigInt {
+    let value = this.get("ethRedeemablePerDeth");
     return value.toBigInt();
   }
 
-  set count(value: BigInt) {
-    this.set("count", Value.fromBigInt(value));
+  set ethRedeemablePerDeth(value: BigInt) {
+    this.set("ethRedeemablePerDeth", Value.fromBigInt(value));
   }
 
-  get owner(): Bytes {
-    let value = this.get("owner");
-    return value.toBytes();
+  get dethRedeemablePerEth(): BigInt {
+    let value = this.get("dethRedeemablePerEth");
+    return value.toBigInt();
   }
 
-  set owner(value: Bytes) {
-    this.set("owner", Value.fromBytes(value));
+  set dethRedeemablePerEth(value: BigInt) {
+    this.set("dethRedeemablePerEth", Value.fromBigInt(value));
   }
 
-  get spender(): Bytes {
-    let value = this.get("spender");
-    return value.toBytes();
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
   }
 
-  set spender(value: Bytes) {
-    this.set("spender", Value.fromBytes(value));
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
   }
 }
